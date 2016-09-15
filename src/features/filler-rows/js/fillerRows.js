@@ -19,8 +19,7 @@
 
   /**
    *  @ngdoc object
-   *  @name uiGridFillerRows
-   *  @propertyOf  ui.grid.expandable.api:GridOptions
+   *  @name ui.grid.fillerRows.directive:uiFillerRows
    *  @description Shows empty rows in the background of the ui-grid, these span
    *  the full height of the ui-grid, so that there won't be blank space below the shown rows.
    *  @example
