@@ -1,0 +1,13 @@
+<div class="ui-grid-filler-rows-container ui-grid-canvas" ui-grid-filler-container>
+  <div class="ui-grid-filler-rows ui-grid-row"
+       ng-repeat="(rowRenderIndex, row) in fillerRow.fakeRows track by $index"
+       ng-style="Viewport.rowStyle(rowRenderIndex)">
+    <div>
+      <div>
+        <div  ng-repeat="(colRenderIndex, col) in colContainer.renderedColumns track by col.colDef.name"
+              class="ui-grid-cell {{::col.getColClass(false) }}">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
