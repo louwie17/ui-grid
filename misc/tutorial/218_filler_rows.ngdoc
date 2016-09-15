@@ -7,7 +7,7 @@
 @example
 <example module="app">
   <file name="app.js">
-    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.resizeColumns', 'ui.grid.moveColumns', 'ui.grid.fillerRows']);
+    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.resizeColumns', 'ui.grid.moveColumns', 'ui.grid.fillerRows', 'ui.grid.autoResize']);
 
     app.controller('MainCtrl', ['$scope', '$http', function ($scope, $http) {
       $scope.gridOptions = {
@@ -19,6 +19,14 @@
         ]
       };
 
+      $scope.randomSize = function () {
+        var newHeight = Math.floor(Math.random() * (300 - 100 + 1) + 300);
+        var newWidth = Math.floor(Math.random() * (600 - 200 + 1) + 200);
+
+        angular.element(document.getElementsByClassName('grid')[0]).css('height', newHeight + 'px');
+        angular.element(document.getElementsByClassName('grid')[0]).css('width', newWidth + 'px');
+      };
+
       $http.get('/data/5.json')
         .success(function(data) {
           $scope.gridOptions.data = data;
@@ -27,8 +35,9 @@
   </file>
   <file name="index.html">
     <div ng-controller="MainCtrl">
+      <button type="button" class="btn btn-success" ng-click="randomSize()">Change to Random Size</button>
       <br>
-      <div ui-grid="gridOptions" class="grid" ui-grid-resize-columns ui-grid-move-columns ui-grid-filler-rows></div>
+      <div ui-grid="gridOptions" class="grid" ui-grid-resize-columns ui-grid-move-columns ui-grid-filler-rows ui-grid-auto-resize></div>
     </div>
   </file>
   <file name="main.css">

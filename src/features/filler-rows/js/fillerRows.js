@@ -3,17 +3,17 @@
 
   /**
    * @ngdoc overview
-   * @name ui.grid.expandable
+   * @name ui.grid.fillerRows
    * @description
    *
-   * # ui.grid.expandable
+   * # ui.grid.fillerRows
    *
    * <div class="alert alert-warning" role="alert"><strong>Alpha</strong> This feature is in development. There will almost certainly be breaking api changes, or there are major outstanding bugs.</div>
    *
-   * This module provides the ability to create subgrids with the ability to expand a row
-   * to show the subgrid.
+   * This module provides the ability to have the background of the ui-grid be empty rows, this would be displayed in the case were
+   * the grid height is greater then the amount of rows displayed.
    *
-   * <div doc-module-components="ui.grid.expandable"></div>
+   * <div doc-module-components="ui.grid.fillerRows"></div>
    */
   var module = angular.module('ui.grid.fillerRows', ['ui.grid']);
 
@@ -21,13 +21,11 @@
    *  @ngdoc object
    *  @name uiGridFillerRows
    *  @propertyOf  ui.grid.expandable.api:GridOptions
-   *  @description Show a rowHeader to provide the expandable buttons.  If set to false then implies
-   *  you're going to use a custom method for expanding and collapsing the subgrids. Defaults to true.
+   *  @description Shows empty rows in the background of the ui-grid, these span
+   *  the full height of the ui-grid, so that there won't be blank space below the shown rows.
    *  @example
    *  <pre>
-   *    $scope.gridOptions = {
-   *      enableExpandableRowHeader: false
-   *    }
+   *  <div ui-grid="gridOptions" class="grid" ui-grid-filler-rows></div>
    *  </pre>
    */
   module.directive('uiGridFillerRows', ['gridUtil', '$templateCache',
@@ -46,6 +44,11 @@
       };
     }]);
 
+  /**
+   *  @ngdoc directive
+   *  @name ui.grid.expandable.directive:uiGridFillerContainer
+   *  @description directive to keep track of the number of fake rows to display
+   */
   module.directive('uiGridFillerContainer', ['gridUtil',
     function (gridUtil) {
       return {
@@ -59,16 +62,11 @@
               $scope.fillerRow.fakeRows = [];
             },
             post: function ($scope, $elm, $attrs, uiGridCtrl) {
-              var prevGridWidth, prevGridHeight;
               var rowHeight = uiGridCtrl.grid.options.rowHeight;
-
-              function getDimensions() {
-                prevGridHeight = gridUtil.elementHeight($elm);
-                prevGridWidth = gridUtil.elementWidth($elm);
-              }
+              var renderBodyContainer = uiGridCtrl.grid.renderContainers.body;
+              var prevGridHeight = renderBodyContainer.getViewportHeight();
 
               function setFakeRows() {
-                getDimensions();
                 var rows = Math.ceil(prevGridHeight / rowHeight);
                 if (rows > 0) {
                   $scope.fillerRow.fakeRows = [];
@@ -77,31 +75,19 @@
                   }
                 }
               }
-              setFakeRows();
 
-              var resizeTimeoutId;
-              function startTimeout() {
-                clearTimeout(resizeTimeoutId);
+              function checkIfHeightChanged() {
+                var newGridHeight = renderBodyContainer.getViewportHeight();
 
-                resizeTimeoutId = setTimeout(function () {
-                  var newGridHeight = gridUtil.elementHeight($elm);
-                  var newGridWidth = gridUtil.elementWidth($elm);
-
-                  //uiGridCtrl.grid.api.core.raise.gridDimensionChanged(prevGridHeight, prevGridWidth, newGridHeight, newGridWidth);
-
-                  if (newGridHeight !== prevGridHeight || newGridWidth !== prevGridWidth) {
-                    setFakeRows();
-                  }
-                  else {
-                    startTimeout();
-                  }
-                }, 250);
+                if (newGridHeight !== prevGridHeight) {
+                  prevGridHeight = newGridHeight;
+                  setFakeRows();
+                }
+                return;
               }
 
-              startTimeout();
-
-              $scope.$on('$destroy', function() {
-                clearTimeout(resizeTimeoutId);
+              uiGridCtrl.grid.registerStyleComputation({
+                func: checkIfHeightChanged
               });
             }
           };
@@ -112,7 +98,7 @@
   /**
    *  @ngdoc directive
    *  @name ui.grid.expandable.directive:uiGridViewport
-   *  @description stacks on the uiGridViewport directive to append the expandable row html elements to the
+   *  @description stacks on the uiGridViewport directive to append the filler rows html elements to the
    *  default gridRow template
    */
   module.directive('uiGridViewport',
@@ -122,10 +108,6 @@
           priority: -200,
           scope: false,
           compile: function ($elm, $attrs) {
-
-             //todo: this adds ng-if watchers to each row even if the grid is not using expandable directive
-             //      or options.enableExpandable == false
-             //      The alternative is to compile the template and append to each row in a uiGridRow directive
 
             var rowFillerContainer = $templateCache.get('ui-grid/fillerContainer');
             $elm.prepend(rowFillerContainer);
