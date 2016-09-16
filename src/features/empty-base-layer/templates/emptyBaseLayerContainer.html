@@ -1,6 +1,6 @@
-<div class="ui-grid-filler-rows-container ui-grid-canvas" ui-grid-filler-container>
-  <div class="ui-grid-filler-rows ui-grid-row"
-       ng-repeat="(rowRenderIndex, row) in fillerRow.fakeRows track by $index"
+<div class="ui-grid-empty-base-layer-container ui-grid-canvas" ui-grid-base-layer-container>
+  <div class="ui-grid-row"
+       ng-repeat="(rowRenderIndex, row) in baseLayer.emptyRows track by $index"
        ng-style="Viewport.rowStyle(rowRenderIndex)">
     <div>
       <div>

@@ -1,5 +1,5 @@
 @ngdoc overview
-@name Tutorial: 218 Filler Rows
+@name Tutorial: 218 Empty Grid Base Layer
 @description
 
 <div class="alert alert-success" role="alert"><strong>Stable</strong> This feature is stable. There should no longer be breaking api changes without a deprecation warning.</div>
@@ -7,7 +7,7 @@
 @example
 <example module="app">
   <file name="app.js">
-    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.resizeColumns', 'ui.grid.moveColumns', 'ui.grid.fillerRows', 'ui.grid.autoResize']);
+    var app = angular.module('app', ['ngTouch', 'ui.grid', 'ui.grid.resizeColumns', 'ui.grid.moveColumns', 'ui.grid.emptyBaseLayer', 'ui.grid.autoResize']);
 
     app.controller('MainCtrl', ['$scope', '$http', function ($scope, $http) {
       $scope.gridOptions = {
@@ -37,7 +37,7 @@
     <div ng-controller="MainCtrl">
       <button type="button" class="btn btn-success" ng-click="randomSize()">Change to Random Size</button>
       <br>
-      <div ui-grid="gridOptions" class="grid" ui-grid-resize-columns ui-grid-move-columns ui-grid-filler-rows ui-grid-auto-resize></div>
+      <div ui-grid="gridOptions" class="grid" ui-grid-resize-columns ui-grid-move-columns ui-grid-empty-base-layer ui-grid-auto-resize></div>
     </div>
   </file>
   <file name="main.css">
