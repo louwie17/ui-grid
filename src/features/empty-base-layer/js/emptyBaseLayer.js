@@ -17,6 +17,54 @@
    */
   var module = angular.module('ui.grid.emptyBaseLayer', ['ui.grid']);
 
+
+  /**
+   *  @ngdoc service
+   *  @name ui.grid.emptyBaseLayer.service:uiGridBaseLayerService
+   *
+   *  @description Services for the empty base layer grid
+   */
+  module.service('uiGridBaseLayerService', ['gridUtil', '$compile', function (gridUtil, $compile) {
+    var service = {
+      initializeGrid: function (grid) {
+
+        grid.baseLayer = {
+          emptyRows: []
+        };
+
+        //default option to true unless it was explicitly set to false
+        /**
+         *  @ngdoc object
+         *  @name ui.grid.emptyBaseLayer.api:GridOptions
+         *
+         *  @description GridOptions for emptyBaseLayer feature, these are available to be
+         *  set using the ui-grid {@link ui.grid.class:GridOptions gridOptions}
+         */
+
+        /**
+         *  @ngdoc object
+         *  @name enableEmptyGridBaseLayer
+         *  @propertyOf  ui.grid.emptyBaseLayer.api:GridOptions
+         *  @description Enable empty base layer, which shows empty rows as background on the entire grid
+         *  <br/>Defaults to true, if the directive is used.
+         */
+        grid.options.enableEmptyGridBaseLayer = grid.options.enableEmptyGridBaseLayer !== false;
+      },
+
+      setNumberOfEmptyRows: function(viewportHeight, grid) {
+        var rowHeight = grid.options.rowHeight;
+        var rows = Math.ceil(viewportHeight / rowHeight);
+        if (rows > 0) {
+          grid.baseLayer.emptyRows = [];
+          for (var i = 0; i < rows; i++) {
+            grid.baseLayer.emptyRows.push({});
+          }
+        }
+      }
+    };
+    return service;
+  }]);
+
   /**
    *  @ngdoc object
    *  @name ui.grid.emptyBaseLayer.directive:uiGridEmptyBaseLayer
@@ -27,88 +75,37 @@
    *  <div ui-grid="gridOptions" class="grid" ui-grid-empty-base-layer></div>
    *  </pre>
    */
-  module.directive('uiGridEmptyBaseLayer', ['gridUtil', '$templateCache',
-    function (gridUtil, $templateCache) {
+  module.directive('uiGridEmptyBaseLayer', ['gridUtil', 'uiGridBaseLayerService',
+    function (gridUtil, uiGridBaseLayerService) {
       return {
         require: '^uiGrid',
         scope: false,
         compile: function ($elm, $attrs) {
           return {
-            pre: function ($scope, $elm, $attrs, controllers) {
+            pre: function ($scope, $elm, $attrs, uiGridCtrl) {
+              uiGridBaseLayerService.initializeGrid(uiGridCtrl.grid);
             },
             post: function ($scope, $elm, $attrs, uiGridCtrl) {
-              var gridOptions = uiGridCtrl.grid.options;
-              //default option to true unless it was explicitly set to false
-              /**
-               *  @ngdoc object
-               *  @name ui.grid.emptyBaseLayer.api:GridOptions
-               *
-               *  @description GridOptions for emptyBaseLayer feature, these are available to be
-               *  set using the ui-grid {@link ui.grid.class:GridOptions gridOptions}
-               */
-
-              /**
-               *  @ngdoc object
-               *  @name enableEmptyGridBaseLayer
-               *  @propertyOf  ui.grid.emptyBaseLayer.api:GridOptions
-               *  @description Enable empty base layer, which shows empty rows as background on the entire grid
-               *  <br/>Defaults to true, if the directive is used.
-               */
-              gridOptions.enableEmptyGridBaseLayer = gridOptions.enableEmptyGridBaseLayer !== false;
-            }
-          };
-        }
-      };
-    }]);
-
-  /**
-   *  @ngdoc directive
-   *  @name ui.grid.emptyBaseLayer.directive:uiGridBaseLayerContainer
-   *  @description directive to keep track of the number of fake rows to display
-   */
-  module.directive('uiGridBaseLayerContainer', ['gridUtil',
-    function (gridUtil) {
-      return {
-        require: '^uiGrid',
-        scope: false,
-        compile: function ($elm, $attrs) {
-          return {
-            pre: function ($scope, $elm, $attrs, controllers) {
-              $scope.baseLayer = {};
-
-              $scope.baseLayer.emptyRows = [];
-            },
-            post: function ($scope, $elm, $attrs, uiGridCtrl) {
-              if (!uiGridCtrl.grid.options.enableEmptyGridBaseLayer) {
-                return; // do nothing
-              }
-
-              var rowHeight = uiGridCtrl.grid.options.rowHeight;
               var renderBodyContainer = uiGridCtrl.grid.renderContainers.body;
               var prevGridHeight = renderBodyContainer.getViewportHeight();
 
-              function setFakeRows() {
-                var rows = Math.ceil(prevGridHeight / rowHeight);
-                if (rows > 0) {
-                  $scope.baseLayer.emptyRows = [];
-                  for (var i = 0; i < rows; i++) {
-                    $scope.baseLayer.emptyRows.push({});
-                  }
-                }
-              }
-
-              function checkIfHeightChanged() {
+              function heightHasChanged() {
                 var newGridHeight = renderBodyContainer.getViewportHeight();
 
                 if (newGridHeight !== prevGridHeight) {
                   prevGridHeight = newGridHeight;
-                  setFakeRows();
+                  return true;
                 }
-                return;
+                return false;
               }
 
               uiGridCtrl.grid.registerStyleComputation({
-                func: checkIfHeightChanged
+                func: function() {
+                  if (heightHasChanged()) {
+                    uiGridBaseLayerService.setNumberOfEmptyRows(prevGridHeight, uiGridCtrl.grid);
+                  }
+                  return;
+                }
               });
             }
           };
@@ -129,7 +126,6 @@
           priority: -200,
           scope: false,
           compile: function ($elm, $attrs) {
-
             var emptyBaseLayerContainer = $templateCache.get('ui-grid/emptyBaseLayerContainer');
             $elm.prepend(emptyBaseLayerContainer);
             return {

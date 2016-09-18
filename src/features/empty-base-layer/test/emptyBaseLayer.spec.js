@@ -1,4 +1,4 @@
-describe('ui.grid.emptyBaseLayer', function () {
+fdescribe('ui.grid.emptyBaseLayer', function () {
 
   var scope, element, timeout;
 

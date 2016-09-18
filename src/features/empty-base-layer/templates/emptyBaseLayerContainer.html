@@ -1,11 +1,11 @@
 <div class="ui-grid-empty-base-layer-container ui-grid-canvas" ui-grid-base-layer-container>
   <div class="ui-grid-row"
-       ng-repeat="(rowRenderIndex, row) in baseLayer.emptyRows track by $index"
+       ng-repeat="(rowRenderIndex, row) in grid.baseLayer.emptyRows track by $index"
        ng-style="Viewport.rowStyle(rowRenderIndex)">
     <div>
       <div>
         <div  ng-repeat="(colRenderIndex, col) in colContainer.renderedColumns track by col.colDef.name"
-              class="ui-grid-cell {{::col.getColClass(false) }}">
+              class="ui-grid-cell {{ col.getColClass(false) }}">
         </div>
       </div>
     </div>
