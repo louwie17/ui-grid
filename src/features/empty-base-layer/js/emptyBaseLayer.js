@@ -26,11 +26,13 @@
    */
   module.service('uiGridBaseLayerService', ['gridUtil', '$compile', function (gridUtil, $compile) {
     var service = {
-      initializeGrid: function (grid) {
+      initializeGrid: function (grid, baseLayerAttr) {
 
         grid.baseLayer = {
           emptyRows: []
         };
+
+        grid.options.enableEmptyGridBaseLayer = baseLayerAttr !== "false";
 
         //default option to true unless it was explicitly set to false
         /**
@@ -74,6 +76,11 @@
    *  <pre>
    *  <div ui-grid="gridOptions" class="grid" ui-grid-empty-base-layer></div>
    *  </pre>
+   *  Or you can enable/disable it dynamically by passing in true or false. It doesn't
+   *  the value, so it would only be set on initial render.
+   *  <pre>
+   *  <div ui-grid="gridOptions" class="grid" ui-grid-empty-base-layer="false"></div>
+   *  </pre>
    */
   module.directive('uiGridEmptyBaseLayer', ['gridUtil', 'uiGridBaseLayerService',
     function (gridUtil, uiGridBaseLayerService) {
@@ -83,9 +90,13 @@
         compile: function ($elm, $attrs) {
           return {
             pre: function ($scope, $elm, $attrs, uiGridCtrl) {
-              uiGridBaseLayerService.initializeGrid(uiGridCtrl.grid);
+              uiGridBaseLayerService.initializeGrid(uiGridCtrl.grid, $attrs.uiGridEmptyBaseLayer);
             },
             post: function ($scope, $elm, $attrs, uiGridCtrl) {
+              if (!uiGridCtrl.grid.options.enableEmptyGridBaseLayer) {
+                return;
+              }
+
               var renderBodyContainer = uiGridCtrl.grid.renderContainers.body;
               var prevGridHeight = renderBodyContainer.getViewportHeight();
 
