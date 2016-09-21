@@ -26,15 +26,8 @@
    */
   module.service('uiGridBaseLayerService', ['gridUtil', '$compile', function (gridUtil, $compile) {
     var service = {
-      initializeGrid: function (grid, baseLayerAttr) {
+      initializeGrid: function (grid, disableEmptyBaseLayer) {
 
-        grid.baseLayer = {
-          emptyRows: []
-        };
-
-        grid.options.enableEmptyGridBaseLayer = baseLayerAttr !== "false";
-
-        //default option to true unless it was explicitly set to false
         /**
          *  @ngdoc object
          *  @name ui.grid.emptyBaseLayer.api:GridOptions
@@ -42,6 +35,9 @@
          *  @description GridOptions for emptyBaseLayer feature, these are available to be
          *  set using the ui-grid {@link ui.grid.class:GridOptions gridOptions}
          */
+        grid.baseLayer = {
+          emptyRows: []
+        };
 
         /**
          *  @ngdoc object
@@ -49,13 +45,17 @@
          *  @propertyOf  ui.grid.emptyBaseLayer.api:GridOptions
          *  @description Enable empty base layer, which shows empty rows as background on the entire grid
          *  <br/>Defaults to true, if the directive is used.
+         *  <br/>Set to false either by setting this attribute or passing false to the directive.
          */
-        grid.options.enableEmptyGridBaseLayer = grid.options.enableEmptyGridBaseLayer !== false;
+        //default option to true unless it was explicitly set to false
+        if (grid.options.enableEmptyGridBaseLayer !== false) {
+          grid.options.enableEmptyGridBaseLayer = !disableEmptyBaseLayer;
+        }
       },
 
       setNumberOfEmptyRows: function(viewportHeight, grid) {
-        var rowHeight = grid.options.rowHeight;
-        var rows = Math.ceil(viewportHeight / rowHeight);
+        var rowHeight = grid.options.rowHeight,
+          rows = Math.ceil(viewportHeight / rowHeight);
         if (rows > 0) {
           grid.baseLayer.emptyRows = [];
           for (var i = 0; i < rows; i++) {
@@ -83,39 +83,51 @@
    *  </pre>
    */
   module.directive('uiGridEmptyBaseLayer', ['gridUtil', 'uiGridBaseLayerService',
-    function (gridUtil, uiGridBaseLayerService) {
+      '$parse',
+    function (gridUtil, uiGridBaseLayerService, $parse) {
       return {
         require: '^uiGrid',
         scope: false,
         compile: function ($elm, $attrs) {
           return {
             pre: function ($scope, $elm, $attrs, uiGridCtrl) {
-              uiGridBaseLayerService.initializeGrid(uiGridCtrl.grid, $attrs.uiGridEmptyBaseLayer);
+              var disableEmptyBaseLayer = $parse($attrs.uiGridEmptyBaseLayer)($scope) === false;
+              uiGridBaseLayerService.initializeGrid(uiGridCtrl.grid, disableEmptyBaseLayer);
             },
             post: function ($scope, $elm, $attrs, uiGridCtrl) {
               if (!uiGridCtrl.grid.options.enableEmptyGridBaseLayer) {
                 return;
               }
 
-              var renderBodyContainer = uiGridCtrl.grid.renderContainers.body;
-              var prevGridHeight = renderBodyContainer.getViewportHeight();
+              var renderBodyContainer = uiGridCtrl.grid.renderContainers.body,
+                viewportHeight = renderBodyContainer.getViewportHeight();
 
               function heightHasChanged() {
-                var newGridHeight = renderBodyContainer.getViewportHeight();
+                var newViewPortHeight = renderBodyContainer.getViewportHeight();
 
-                if (newGridHeight !== prevGridHeight) {
-                  prevGridHeight = newGridHeight;
+                if (newViewPortHeight !== viewportHeight) {
+                  viewportHeight = newViewPortHeight;
                   return true;
                 }
                 return false;
               }
 
+              function getEmptyBaseLayerCss(viewportHeight) {
+                var ret = '';
+                // Set ui-grid-empty-base-layer height
+                ret += '\n .grid' + uiGridCtrl.grid.id +
+                  ' .ui-grid-render-container ' +
+                  '.ui-grid-empty-base-layer-container.ui-grid-canvas ' +
+                  '{ height: ' + viewportHeight + 'px; }';
+                return ret;
+              }
+
               uiGridCtrl.grid.registerStyleComputation({
                 func: function() {
                   if (heightHasChanged()) {
-                    uiGridBaseLayerService.setNumberOfEmptyRows(prevGridHeight, uiGridCtrl.grid);
+                    uiGridBaseLayerService.setNumberOfEmptyRows(viewportHeight, uiGridCtrl.grid);
                   }
-                  return;
+                  return getEmptyBaseLayerCss(viewportHeight);
                 }
               });
             }

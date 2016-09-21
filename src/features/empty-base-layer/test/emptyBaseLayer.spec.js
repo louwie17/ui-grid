@@ -1,14 +1,13 @@
-describe('ui.grid.emptyBaseLayer', function () {
+fdescribe('ui.grid.emptyBaseLayer', function () {
 
-  var scope, element, timeout, viewportHeight, emptyBaseLayerContainer;
+  var scope, element, viewportHeight, emptyBaseLayerContainer, $compile;
 
   beforeEach(module('ui.grid.emptyBaseLayer'));
 
-  beforeEach(inject(function (_$compile_, $rootScope, $timeout, $httpBackend) {
+  beforeEach(inject(function (_$compile_, $rootScope, $httpBackend) {
 
-    var $compile = _$compile_;
+    $compile = _$compile_;
     scope = $rootScope;
-    timeout = $timeout;
 
     viewportHeight = "100";
     scope.gridOptions = {};
@@ -23,31 +22,73 @@ describe('ui.grid.emptyBaseLayer', function () {
         return viewportHeight;
       });
     };
-
-    //$httpBackend.when('GET', 'expandableRowTemplate.html').respond("<div class='test'></div>");
-    element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer></div>');
-
-    $timeout(function () {
-      $compile(element)(scope);
-    });
-    $timeout.flush();
-
-    emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
-    //scope.grid.buildStyles
   }));
 
-  it('should add emptyBaseLayerContainer to the viewport html', function () {
-    expect(element.find('.ui-grid-empty-base-layer-container').length).toBe(1);
+  describe('enabled', function() {
+    beforeEach(function() {
+      element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer></div>');
+
+      $compile(element)(scope);
+      scope.$digest();
+
+      emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
+    });
+
+    it('should add emptyBaseLayerContainer to the viewport html', function () {
+      expect(element.find('.ui-grid-empty-base-layer-container').length).toBe(1);
+    });
+
+    it('should add fake rows to the empty base layer container, on building styles', function() {
+      expect(emptyBaseLayerContainer.children().length).toBe(4);
+    });
+
+    it('should increase in rows if viewport height increased', function() {
+      viewportHeight = "150";
+      scope.grid.buildStyles();
+      scope.$digest();
+      expect(emptyBaseLayerContainer.children().length).toBe(5);
+    });
   });
 
-  it('should add fake rows to the empty base layer container, on building styles', function() {
-    expect(emptyBaseLayerContainer.children().length).toBe(4);
-  });
+  describe('disabled', function() {
+    it('should be disabled if we pass false into the directive in the markup', function() {
+      element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer="false"></div>');
+      $compile(element)(scope);
+      scope.$digest();
+      emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
+      expect(emptyBaseLayerContainer.children().length).toBe(0);
+    });
 
-  it('should increase in rows if viewport height increased', function() {
-    viewportHeight = "150";
-    scope.grid.buildStyles();
-    scope.$digest();
-    expect(emptyBaseLayerContainer.children().length).toBe(5);
+    it('should be disabled if we pass false as an value through the scope in markup', function() {
+      scope.enableEmptyBaseLayer = false;
+      element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer="enableEmptyBaseLayer"></div>');
+      $compile(element)(scope);
+      scope.$digest();
+      emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
+      expect(emptyBaseLayerContainer.children().length).toBe(0);
+    });
+
+    it('should be disabled if set enableEmptyGridBaseLayer in gridOptions to false', function() {
+      scope.gridOptions.enableEmptyGridBaseLayer = false;
+      element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer></div>');
+      $compile(element)(scope);
+      scope.$digest();
+      emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
+      expect(emptyBaseLayerContainer.children().length).toBe(0);
+    });
+
+    it('should not reset the number of rows incase it is disabled', function() {
+      scope.gridOptions.enableEmptyGridBaseLayer = false;
+      element = angular.element('<div class="col-md-5" ui-grid="gridOptions" ui-grid-empty-base-layer></div>');
+      $compile(element)(scope);
+      scope.$digest();
+      emptyBaseLayerContainer = angular.element(element.find('.ui-grid-empty-base-layer-container')[0]);
+      expect(emptyBaseLayerContainer.children().length).toBe(0);
+
+      viewportHeight = "150";
+      scope.grid.buildStyles();
+      scope.$digest();
+      expect(emptyBaseLayerContainer.children().length).toBe(0);
+    });
   });
 });
