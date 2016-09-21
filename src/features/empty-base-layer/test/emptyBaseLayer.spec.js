@@ -1,4 +1,4 @@
-fdescribe('ui.grid.emptyBaseLayer', function () {
+describe('ui.grid.emptyBaseLayer', function () {
 
   var scope, element, viewportHeight, emptyBaseLayerContainer, $compile;
 
